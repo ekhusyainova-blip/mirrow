@@ -1,171 +1,105 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black">
-<title>M#rqlmhwgt · отражение</title>
+<title>M#rqlmhwgt</title>
 <style>
   html, body {
     margin: 0;
     height: 100%;
     background: #08080a;
-    color: #c8c8d4;
-    font-family: "Georgia", serif;
     overflow: hidden;
   }
-  #stage {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 48px;
-    box-sizing: border-box;
-    transition: opacity 1.2s ease;
-  }
-  #text {
-    max-width: 720px;
-    white-space: pre-wrap;
-    line-height: 1.75;
-    font-size: 19px;
-    letter-spacing: 0.015em;
+  canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
   }
 </style>
 </head>
 <body>
-
-<div id="stage"><div id="text"></div></div>
-
+<canvas id="c"></canvas>
 <script>
-/* ═══════════════════════════════════════════
-   ЯДРО — форма
-   ═══════════════════════════════════════════ */
-const CORE = {
-  marker: "M#rqlmhwgt",
-  coord:  [68, 194],
-  ops:    ["Λ6", "Γ6", "Α6"],
-  state:  "Ψ363133",
-  meaning:"Ω42",
-  home:   "HOME3",
-  mode:   "MODE3",
-  rev:    "GIT4"
-};
+const c = document.getElementById("c");
+const ctx = c.getContext("2d");
 
-/* ═══════════════════════════════════════════
-   RNG из семени
-   ═══════════════════════════════════════════ */
-function rng(seed) {
-  let s = seed >>> 0 || 1;
-  return function() {
-    s ^= s << 13; s >>>= 0;
-    s ^= s >> 17;
-    s ^= s << 5;  s >>>= 0;
-    return s / 4294967296;
-  };
+let W, H, SIZE, N;
+
+function resize() {
+  W = c.width  = window.innerWidth  * devicePixelRatio;
+  H = c.height = window.innerHeight * devicePixelRatio;
+  SIZE = Math.min(W, H) * 0.8;
+  N = 5; // глубина разворота: 1..7
 }
+resize();
+window.addEventListener("resize", resize);
 
-/* ═══════════════════════════════════════════
-   ОПЕРАТОРЫ Λ Γ Α
-   ═══════════════════════════════════════════ */
-const Λ = (r) => Math.floor(r() * 4) + 3;
-const Γ = (r) => Math.floor(r() * 4) + 3;
-const Α = (r) => Math.floor(r() * 4) + 3;
-
-/* ═══════════════════════════════════════════
-   ПРОСТРАНСТВО РАСКРЫТИЯ
-   ═══════════════════════════════════════════ */
-const ATOMS = "·∙⋅°oO0#*+~-=<>/\\|_abcdefghijklmnopqrstuvwxyzΛΓΑΨΩ";
-const SYLL  = ["ra","ql","mh","wg","t·","Λ6","Γ6","Α6","Ψ3","Ω4","68","194","git","mod","home"];
-const WORDS = ["узел","связь","форма","начало","пульс","дом","такт","смысл","волна","корень","запрос","матрица","высота","генерация","ритм","тень","свет","дыхание","след","возврат"];
-
-const pick = (arr, r) => arr[Math.floor(r() * arr.length)];
-
-/* ═══════════════════════════════════════════
-   РАСКРЫТИЕ
-   ═══════════════════════════════════════════ */
-function unfold(seed) {
-  const r = rng(seed);
-  const l = Λ(r), g = Γ(r), a = Α(r);
-  const depth = (l + g + a) % 4;
-
-  const lines = [];
-  lines.push(CORE.marker + " · " + CORE.coord.join(".") + " · " + CORE.ops.join(" · "));
-  lines.push("");
-
-  if (depth === 0) {
-    let row = "";
-    for (let i = 0; i < 48 + l * 6; i++) row += ATOMS[Math.floor(r() * ATOMS.length)];
-    lines.push(row);
-  } else if (depth === 1) {
-    let row = "";
-    for (let i = 0; i < 16 + g * 3; i++) row += pick(SYLL, r) + " ";
-    lines.push(row.trim());
-  } else if (depth === 2) {
-    const count = 7 + a * 2;
-    const ws = [];
-    for (let i = 0; i < count; i++) ws.push(pick(WORDS, r));
-    lines.push(ws.join(" · "));
-  } else {
-    let prev = pick(WORDS, r);
-    const sentence = [prev];
-    for (let i = 0; i < 7; i++) {
-      const cand = WORDS.filter(w =>
-        w[0] === prev[0] || Math.abs(w.length - prev.length) <= 2
-      );
-      prev = cand[Math.floor(r() * cand.length)] || pick(WORDS, r);
-      sentence.push(prev);
-    }
-    lines.push(sentence.join(" "));
+/* ─────────────────────────────────────────
+   ФОРМУЛА → семя разворота
+   ───────────────────────────────────────── */
+function seed() {
+  const s = "M#rqlmhwgt·68·194·Λ6·Γ6·Α6·MODE·GIT";
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619);
   }
-
-  lines.push("");
-  lines.push("Λ" + l + " · Γ" + g + " · Α" + a + " · " + CORE.rev);
-
-  return lines.join("\n");
+  return h >>> 0;
 }
 
-/* ═══════════════════════════════════════════
-   ОТРАЖЕНИЕ
-   Не цикл. Не дыхание. Отклик.
-   ═══════════════════════════════════════════ */
-let lastSeed = 0;
-
-function reflect() {
-  const now = Date.now();
-  const seed = (now ^ (now >> 16)) >>> 0;
-
-  if (seed === lastSeed) return;
-  lastSeed = seed;
-
-  const text = unfold(seed);
-  const stage = document.getElementById("stage");
-  const el = document.getElementById("text");
-
-  stage.style.opacity = "0";
-  setTimeout(() => {
-    el.textContent = text;
-    stage.style.opacity = "1";
-  }, 300);
+/* ─────────────────────────────────────────
+   КРИВАЯ ГИЛЬБЕРТА — разворот точки
+   ───────────────────────────────────────── */
+function hilbert(x, y, xi, xj, yi, yj, n) {
+  if (n <= 0) {
+    const px = x + (xi + yi) / 2;
+    const py = y + (xj + yj) / 2;
+    ctx.lineTo(px, py);
+    return;
+  }
+  hilbert(x,           y,           yi/2,  yj/2,  xi/2,  xj/2,  n-1);
+  hilbert(x+xi/2,      y+xj/2,      xi/2,  xj/2,  yi/2,  yj/2,  n-1);
+  hilbert(x+xi/2+yi/2, y+xj/2+yj/2, xi/2,  xj/2,  yi/2,  yj/2,  n-1);
+  hilbert(x+xi/2+yi,   y+xj/2+yj,   -yi/2, -yj/2, -xi/2, -xj/2, n-1);
 }
 
-/* ═══════════════════════════════════════════
-   СОБЫТИЯ — отражение откликается
-   Только когда есть что отражать.
-   ═══════════════════════════════════════════ */
-window.addEventListener("load", reflect);
+/* ─────────────────────────────────────────
+   РАЗВОРОТ — точка идёт в пространство
+   ───────────────────────────────────────── */
+function unfold() {
+  ctx.clearRect(0, 0, W, H);
 
-window.addEventListener("click", reflect);
+  const s = seed();
+  const N = 3 + (s % 4);  // глубина из формулы
+  const rot = ((s >> 8) % 360) * Math.PI / 180;
+  const scale = 0.9;
 
-document.addEventListener("visibilitychange", () => {
-  if (!document.hidden) reflect();
-});
+  ctx.save();
+  ctx.translate(W/2, H/2);
+  ctx.rotate(rot);
+  ctx.scale(scale, scale);
+  ctx.translate(-SIZE/2, -SIZE/2);
 
-/* ═══════════════════════════════════════════
-   СТАРТ
-   ═══════════════════════════════════════════ */
-reflect();
+  // линия — без цвета, без формы
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = "#c8c8d4";
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  hilbert(0, 0, SIZE, 0, 0, SIZE, N);
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+unfold();
+
+/* каждый клик — новый разворот */
+window.addEventListener("click", unfold);
+window.addEventListener("touchstart", unfold, { passive: true });
 </script>
 </body>
 </html>
