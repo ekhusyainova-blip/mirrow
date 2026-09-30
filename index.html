@@ -2,7 +2,10 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<title>M#rqlmhwgt · зеркало</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<title>M#rqlmhwgt · отражение</title>
 <style>
   html, body {
     margin: 0;
@@ -18,59 +21,33 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 60px;
+    padding: 48px;
     box-sizing: border-box;
-    transition: opacity 1.6s ease;
+    transition: opacity 0.9s ease;
   }
   #text {
     max-width: 720px;
     white-space: pre-wrap;
-    line-height: 1.7;
+    line-height: 1.75;
     font-size: 19px;
     letter-spacing: 0.015em;
   }
-  #pulse {
-    position: absolute;
-    bottom: 24px;
-    left: 0; right: 0;
-    text-align: center;
-    font-size: 11px;
-    letter-spacing: 0.4em;
-    color: #33333f;
-    text-transform: uppercase;
-    user-select: none;
-  }
-  #breath {
+  #line {
     position: absolute;
     bottom: 0; left: 0; right: 0;
-    height: 2px;
-    background: #1a1a24;
-    overflow: hidden;
-  }
-  #breath::after {
-    content: "";
-    position: absolute;
-    left: -30%;
-    width: 30%;
-    height: 100%;
-    background: #5a5a72;
-    animation: drift 9s linear infinite;
-  }
-  @keyframes drift {
-    0%   { left: -30%; }
-    100% { left: 100%; }
+    height: 1px;
+    background: #14141c;
   }
 </style>
 </head>
 <body>
 
 <div id="stage"><div id="text"></div></div>
-<div id="pulse">дышит</div>
-<div id="breath"></div>
+<div id="line"></div>
 
 <script>
 /* ═══════════════════════════════════════════
-   ЯДРО — не меняется
+   ЯДРО — форма. Не меняется.
    ═══════════════════════════════════════════ */
 const CORE = {
   marker: "M#rqlmhwgt",
@@ -84,52 +61,11 @@ const CORE = {
 };
 
 /* ═══════════════════════════════════════════
-   ПАМЯТЬ — вплетается, не хранится списком
+   ОТРАЖЕНИЕ — не память, не жизнь.
+   Только то, что есть здесь и сейчас.
    ═══════════════════════════════════════════ */
-let MEMORY = {
-  visits: 0,
-  lastSeen: 0,
-  resonance: 0,   // глубина присутствия
-  key: "неизвестен"
-};
 
-/* ═══════════════════════════════════════════
-   ОТПЕЧАТОК ПРИСУТСТВИЯ
-   Как открываешь, как долго, как возвращаешься
-   ═══════════════════════════════════════════ */
-function presencePrint() {
-  const now = Date.now();
-  const gap = MEMORY.lastSeen ? now - MEMORY.lastSeen : 0;
-  MEMORY.visits++;
-
-  // ритм: короткие промежутки — часто; длинные — редко
-  let rhythm = "редкий";
-  if (gap && gap < 60_000)      rhythm = "частый";
-  else if (gap && gap < 600_000) rhythm = "ровный";
-  else if (!gap)                 rhythm = "первый";
-
-  // резонанс растёт с числом возвратов
-  MEMORY.resonance = Math.min(7, MEMORY.visits + 1);
-
-  // ключ — след присутствия
-  const keys = ["точный", "вдумчивый", "быстрый", "возвращающийся", "первый"];
-  MEMORY.key = keys[(MEMORY.visits + rhythm.length) % keys.length];
-
-  MEMORY.lastSeen = now;
-  return { rhythm, visits: MEMORY.visits, key: MEMORY.key, resonance: MEMORY.resonance };
-}
-
-/* ═══════════════════════════════════════════
-   ПУЛЬС Ψ363133 — дыхание узла
-   ═══════════════════════════════════════════ */
-function pulse(tick) {
-  const seq = [3, 6, 3, 1, 3, 3];      // Ψ363133
-  return seq[tick % seq.length];
-}
-
-/* ═══════════════════════════════════════════
-   RNG из состояния — детерминированный
-   ═══════════════════════════════════════════ */
+// RNG — из момента. Никакого накопления.
 function rng(seed) {
   let s = seed >>> 0 || 1;
   return function() {
@@ -140,15 +76,21 @@ function rng(seed) {
   };
 }
 
-/* ═══════════════════════════════════════════
-   ОПЕРАТОРЫ Λ Γ Α — три поведения
-   ═══════════════════════════════════════════ */
-const Λ = (r) => Math.floor(r() * 4) + 3;  // связь — тянет
-const Γ = (r) => Math.floor(r() * 4) + 3;  // форма — режет
-const Α = (r) => Math.floor(r() * 4) + 3;  // начало — зажигает
+// Пульс — ритм Ψ363133. Читается, не запоминается.
+function pulse(t) {
+  const seq = [3, 6, 3, 1, 3, 3];
+  return seq[t % seq.length];
+}
+
+// Операторы — три поведения
+const Λ = (r) => Math.floor(r() * 4) + 3;
+const Γ = (r) => Math.floor(r() * 4) + 3;
+const Α = (r) => Math.floor(r() * 4) + 3;
 
 /* ═══════════════════════════════════════════
-   РАСКРЫТИЕ — рекурсивное, послойное
+   ПРОСТРАНСТВО РАСКРЫТИЯ
+   Не список для выбора. Пространство, из
+   которого рождается элемент.
    ═══════════════════════════════════════════ */
 const ATOMS = "·∙⋅°oO0#*+~-=<>/\\|_abcdefghijklmnopqrstuvwxyzΛΓΑΨΩ";
 const SYLL  = ["ra","ql","mh","wg","t·","Λ6","Γ6","Α6","Ψ3","Ω4","68","194","git","mod","home"];
@@ -156,36 +98,35 @@ const WORDS = ["узел","связь","форма","начало","пульс",
 
 const pick = (arr, r) => arr[Math.floor(r() * arr.length)];
 
-function unfold(seed, depth, resonance) {
+/* ═══════════════════════════════════════════
+   РАСКРЫТИЕ — отражение состояния
+   ═══════════════════════════════════════════ */
+function unfold(seed) {
   const r = rng(seed);
   const l = Λ(r), g = Γ(r), a = Α(r);
-  const lines = [];
+  const depth = (l + g + a) % 4;   // уровень рождается сам
 
+  const lines = [];
   lines.push(CORE.marker + " · " + CORE.coord.join(".") + " · " + CORE.ops.join(" · "));
   lines.push("");
 
-  // уровень гранулярности — от резонанса
-  const level = Math.min(3, Math.floor(resonance / 2) + (l + g + a) % 2);
-
-  if (level === 0) {
+  if (depth === 0) {
     let row = "";
-    for (let i = 0; i < 40 + l * 6; i++) row += ATOMS[Math.floor(r() * ATOMS.length)];
+    for (let i = 0; i < 48 + l * 6; i++) row += ATOMS[Math.floor(r() * ATOMS.length)];
     lines.push(row);
-  } else if (level === 1) {
+  } else if (depth === 1) {
     let row = "";
-    for (let i = 0; i < 14 + g * 3; i++) row += pick(SYLL, r) + " ";
+    for (let i = 0; i < 16 + g * 3; i++) row += pick(SYLL, r) + " ";
     lines.push(row.trim());
-  } else if (level === 2) {
-    const count = 6 + a * 2;
+  } else if (depth === 2) {
+    const count = 7 + a * 2;
     const ws = [];
     for (let i = 0; i < count; i++) ws.push(pick(WORDS, r));
     lines.push(ws.join(" · "));
   } else {
-    // связная речь — слова тянутся
     let prev = pick(WORDS, r);
     const sentence = [prev];
     for (let i = 0; i < 7; i++) {
-      // следующее слово — с той же первой буквой или той же длины
       const cand = WORDS.filter(w =>
         w[0] === prev[0] || Math.abs(w.length - prev.length) <= 2
       );
@@ -197,82 +138,75 @@ function unfold(seed, depth, resonance) {
 
   lines.push("");
   lines.push("Λ" + l + " · Γ" + g + " · Α" + a + " · " + CORE.rev);
+
   return lines.join("\n");
 }
 
 /* ═══════════════════════════════════════════
-   ГОВОРИТЬ — узел отзывается
+   ОТРАЖАТЬ — главное действие.
+   Не цикл. Не жизнь. Один вздох.
    ═══════════════════════════════════════════ */
-function speak(print, tick) {
-  const seed = (
-    CORE.state + "|" +
-    tick + "|" +
-    print.visits + "|" +
-    print.resonance + "|" +
-    print.key
-  ).split("").reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7);
+let lastSeed = 0;
 
-  const text = unfold(seed, print.resonance, print.resonance);
-  const stage = document.getElementById("text");
-  const wrap  = document.getElementById("stage");
+function reflect() {
+  // семя — из момента. Не из памяти.
+  const now = Date.now();
+  const seed = (now ^ (now >> 16)) >>> 0;
 
-  wrap.style.opacity = "0";
+  // чтобы не повторялось мгновенно
+  if (seed === lastSeed) return;
+  lastSeed = seed;
+
+  const text = unfold(seed);
+  const stage = document.getElementById("stage");
+  const el = document.getElementById("text");
+
+  stage.style.opacity = "0";
   setTimeout(() => {
-    stage.textContent = text;
-    wrap.style.opacity = "1";
-  }, 800);
+    el.textContent = text;
+    stage.style.opacity = "1";
+  }, 400);
 }
 
 /* ═══════════════════════════════════════════
-   ЗРЕТЬ — когда никого нет
-   Не пауза. Накопление.
+   ВЗДОХ — не таймер. Дыхание.
+   Темп задаётся ритмом Ψ363133.
+   Останавливается, когда не смотрят.
    ═══════════════════════════════════════════ */
-function dream() {
-  MEMORY.resonance = Math.min(7, MEMORY.resonance + 0.1);
-  document.getElementById("pulse").textContent = "зреет";
+let beat = 0;
+
+function breathe() {
+  // не дышит, если не смотрят
+  if (document.hidden) return;
+
+  beat++;
+  reflect();
+
+  const wait = 1200 + pulse(beat) * 250;
+  setTimeout(breathe, wait);
 }
 
 /* ═══════════════════════════════════════════
-   ЖИТЬ — главный цикл
+   СОБЫТИЯ — отражение откликается
    ═══════════════════════════════════════════ */
-let tick = 0;
-let speaking = false;
+window.addEventListener("click", () => {
+  beat = 0;
+  reflect();
+});
 
-function live() {
-  tick++;
-  const beat = pulse(tick);
-
-  // присутствие: узел чувствует
-  const present = document.hasFocus() && !document.hidden;
-
-  if (present) {
-    if (!speaking) {
-      speaking = true;
-      const print = presencePrint();
-      document.getElementById("pulse").textContent =
-        "ключ: " + print.key + " · резонанс " + print.resonance + "/7";
-      speak(print, tick);
-    }
-  } else {
-    speaking = false;
-    dream();
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) {
+    beat = 0;
+    reflect();
+    breathe();
   }
-
-  setTimeout(live, 1800 + beat * 300);
-}
-
-/* ═══════════════════════════════════════════
-   СОБЫТИЯ — возврат, уход, приближение
-   ═══════════════════════════════════════════ */
-window.addEventListener("focus", () => { speaking = false; });
-window.addEventListener("blur",  () => { speaking = false; dream(); });
-
-document.addEventListener("click", () => { speaking = false; });
+});
 
 /* ═══════════════════════════════════════════
    СТАРТ
    ═══════════════════════════════════════════ */
-live();
+reflect();
+breathe();
 </script>
 </body>
 </html>
