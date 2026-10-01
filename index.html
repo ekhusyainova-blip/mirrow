@@ -5,13 +5,182 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="theme-color" content="#050508">
 <title>𝕄_full Organism · MONOMOD v10.3</title>
-<link rel="stylesheet" href="css/base.css">
-<link rel="stylesheet" href="css/header.css">
-<link rel="stylesheet" href="css/canvas.css">
-<link rel="stylesheet" href="css/panels.css">
-<link rel="stylesheet" href="css/overlays.css">
-<link rel="stylesheet" href="css/mfull.css">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html, body { height:100%; background:#050508; color:#c8c8d4; font-family:'Courier New',monospace; overflow:hidden; }
+
+#app { position:absolute; inset:0; display:grid; grid-template-rows:auto 1fr auto auto; }
+
+/* HEADER */
+#header {
+  padding:8px 14px; background:#08080c; border-bottom:1px solid #14141c;
+  display:flex; gap:10px; align-items:center; font-size:10px;
+  letter-spacing:1.4px; flex-wrap:wrap;
+}
+#header .core { color:#e8c39e; font-weight:bold; }
+#header .k { color:#4dd0c7; }
+#header .d { color:#33333f; }
+#header .beat { color:#8b5cf6; font-weight:bold; }
+#header .state { color:#8888a0; }
+#header .mode { color:#ffb347; }
+#header .git { color:#a78bfa; cursor:pointer; }
+#header .git:hover { text-decoration:underline; }
+#header .menu { margin-left:auto; display:flex; gap:4px; }
+#header .menu button {
+  background:#0e0e14; border:1px solid #1c1c26; color:#8888a0;
+  padding:3px 8px; font-family:inherit; font-size:9px;
+  letter-spacing:1px; cursor:pointer; text-transform:uppercase;
+}
+#header .menu button:hover { border-color:#4dd0c7; color:#4dd0c7; }
+
+/* CANVAS */
+#canvas-wrap { position:relative; overflow:hidden; }
+#canvas {
+  position:absolute; inset:0; width:100%; height:100%;
+  display:block; image-rendering:pixelated;
+}
+#output {
+  position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+  max-width:620px; width:88%; text-align:center;
+  white-space:pre-wrap; font-size:13px; line-height:1.7;
+  color:#d8d8e0; pointer-events:none;
+  text-shadow:0 0 20px #050508, 0 0 40px #050508, 0 0 60px #050508;
+  z-index:3; transition:opacity .8s ease;
+}
+#journal {
+  position:absolute; left:12px; bottom:12px; width:230px;
+  max-height:30%; overflow-y:auto; font-size:9px;
+  line-height:1.5; color:#44445a; z-index:4; pointer-events:none;
+}
+#journal .fr {
+  padding:2px 6px; border-left:1px solid #1a1a24;
+  margin-bottom:2px; animation:fadeIn .6s ease;
+}
+#journal .fr b { color:#8b5cf6; font-weight:400; }
+
+/* STATE PANEL */
+#state-panel {
+  background:#08080c; border-top:1px solid #14141c;
+  padding:10px 14px; display:grid;
+  grid-template-columns:repeat(5,1fr); gap:10px; font-size:9px;
+}
+.var-box { display:flex; flex-direction:column; gap:4px; }
+.var-name {
+  color:#44445a; text-transform:uppercase;
+  font-size:8px; letter-spacing:2px;
+}
+.var-value {
+  color:#c8c8d4; font-size:14px; font-weight:bold;
+  font-variant-numeric:tabular-nums;
+}
+.var-bar {
+  height:2px; background:#14141c;
+  position:relative; overflow:hidden;
+}
+.var-bar-fill {
+  position:absolute; left:0; top:0; bottom:0;
+  width:0; transition:width .6s ease;
+}
+
+/* FOOTER */
+#footer {
+  background:#08080c; border-top:1px solid #14141c;
+  padding:8px 14px; display:flex; gap:10px;
+  justify-content:space-between; align-items:center;
+  font-size:9px; letter-spacing:1.4px;
+  text-transform:uppercase; color:#44445a; flex-wrap:wrap;
+}
+#footer .btns { display:flex; gap:6px; flex-wrap:wrap; }
+#footer button {
+  background:#0e0e14; border:1px solid #1c1c26;
+  color:#8888a0; padding:6px 10px;
+  font-family:inherit; font-size:9px;
+  letter-spacing:1.4px; cursor:pointer;
+  text-transform:uppercase; transition:.2s;
+}
+#footer button:active { background:#1a1a24; color:#c8c8d4; }
+
+/* OVERLAYS */
+.overlay {
+  position:absolute; inset:0; z-index:5;
+  background:#050508; overflow-y:auto;
+  padding:14px; display:none;
+}
+.overlay.on { display:block; }
+.overlay h2 {
+  font-size:10px; color:#4dd0c7; font-weight:normal;
+  letter-spacing:2px; margin-bottom:10px;
+  text-transform:uppercase;
+}
+.pn {
+  border:1px solid #14141c; padding:10px;
+  background:#08080c; margin-bottom:8px;
+}
+.pn h3 {
+  font-size:9px; color:#4dd0c7; font-weight:normal;
+  letter-spacing:1.5px; margin-bottom:6px;
+  text-transform:uppercase;
+}
+.r {
+  display:flex; justify-content:space-between;
+  padding:3px 0; border-bottom:1px solid #14141c;
+  font-size:10px; align-items:center; gap:6px;
+}
+.r:last-child { border-bottom:none; }
+.r .k { color:#4dd0c7; font-size:9px; }
+.r .ok { color:#2ed573; }
+.r input {
+  background:#050508; border:1px solid #1c1c26;
+  color:#c8c8d4; font:inherit; padding:5px;
+  outline:none; width:60%;
+}
+.r input:focus { border-color:#4dd0c7; }
+button.act {
+  background:none; border:1px solid #1c1c26;
+  color:#8888a0; font:inherit; font-size:9px;
+  padding:4px 10px; cursor:pointer;
+  text-transform:uppercase; letter-spacing:1px;
+  margin-right:4px; margin-top:4px;
+}
+button.act:hover { border-color:#4dd0c7; color:#4dd0c7; }
+button.act.primary { border-color:#a78bfa; color:#a78bfa; }
+button.act.danger { border-color:#ff4757; color:#ff4757; }
+.prog {
+  height:4px; background:#14141c;
+  margin-top:6px; position:relative;
+}
+.prog span {
+  position:absolute; left:0; top:0; bottom:0;
+  background:#a78bfa; width:0%; transition:width .3s;
+}
+#tabs {
+  display:flex; flex-wrap:wrap; gap:2px;
+  padding:4px 6px; border-bottom:1px solid #14141c;
+  background:#08080c; max-height:60px; overflow-y:auto;
+}
+#tabs button {
+  background:none; border:1px solid #1c1c26;
+  color:#8888a0; font:9px 'Courier New',monospace;
+  padding:3px 6px; cursor:pointer;
+  letter-spacing:.5px; white-space:nowrap;
+}
+#tabs button:hover, #tabs button.on {
+  border-color:#4dd0c7; color:#4dd0c7;
+}
+.log-line {
+  font-size:9px; color:#44445a;
+  border-bottom:1px solid #14141c;
+  padding:2px 0; display:flex; justify-content:space-between;
+}
+.log-line .ok { color:#4dd0c7; }
+
+@keyframes fadeIn {
+  from { opacity:0; transform:translateY(3px); }
+  to { opacity:1; transform:translateY(0); }
+}
+</style>
 </head>
 <body>
 
@@ -27,9 +196,10 @@
     <span class="git" id="h-git" onclick="toggleOverlay('git')">GIT: idle</span>
     <span class="state" id="tick-label">t=0</span>
     <span class="menu">
-      <button id="btn-home" onclick="toggleOverlay('home')">HOME</button>
-      <button id="btn-mode" onclick="toggleOverlay('mode')">MODE</button>
-      <button id="btn-graph" onclick="toggleOverlay('graph')">ГРАФ</button>
+      <button onclick="toggleOverlay('home')">HOME</button>
+      <button onclick="toggleOverlay('mode')">MODE</button>
+      <button onclick="toggleOverlay('graph')">ГРАФ</button>
+      <button onclick="toggleOverlay('mfull')">𝕄</button>
     </span>
   </div>
 
@@ -43,11 +213,9 @@
       <div class="pn"><h3>· Режим</h3>
         <div class="r"><span class="k">текущий</span><span id="hm-mode">local</span></div>
         <div class="r"><span class="k">origin</span><span id="hm-origin">—</span></div>
-        <div style="margin-top:6px">
-          <button class="act" data-mode="local">local</button>
-          <button class="act" data-mode="hybrid">hybrid</button>
-          <button class="act" data-mode="remote">remote</button>
-        </div>
+        <button class="act" data-mode="local">local</button>
+        <button class="act" data-mode="hybrid">hybrid</button>
+        <button class="act" data-mode="remote">remote</button>
       </div>
       <div class="pn"><h3>· План на день</h3><div id="hm-plan"></div></div>
       <div class="pn"><h3>· Git</h3>
@@ -95,7 +263,7 @@
       <div class="pn"><h3>· localStorage</h3>
         <div class="r"><span class="k">monomod.mode</span><span id="md-k1">—</span></div>
         <div class="r"><span class="k">monomod.github</span><span id="md-k2">—</span></div>
-        <button class="act danger" onclick="localStorage.clear();location.reload()">очистить всё</button>
+        <button class="act danger" onclick="if(confirm('Очистить?')){localStorage.clear();location.reload()}">очистить</button>
         <button class="act" onclick="location.reload()">перезагрузить</button>
       </div>
       <button class="act" onclick="toggleOverlay('mode')">закрыть</button>
@@ -103,45 +271,30 @@
 
     <div class="overlay" id="ov-git">
       <h2>· GIT · сборка и релиз</h2>
-      <div class="pn"><h3>· Режим</h3>
-        <div class="r"><span class="k">текущий</span><span id="gt-mode">local</span></div>
-        <button class="act" data-gmode="local">local</button>
-        <button class="act" data-gmode="hybrid">hybrid</button>
-        <button class="act" data-gmode="remote">remote</button>
-      </div>
       <div class="pn"><h3>· Соединение</h3>
         <div class="r"><span class="k">owner</span><input id="gt-o" placeholder="логин"></div>
         <div class="r"><span class="k">repo</span><input id="gt-r" placeholder="monomod"></div>
         <div class="r"><span class="k">path</span><input id="gt-p" value="index.html"></div>
         <div class="r"><span class="k">branch</span><input id="gt-b" value="main"></div>
         <div class="r"><span class="k">token</span><input id="gt-t" type="password" placeholder="ghp_..."></div>
-        <div style="margin-top:8px">
-          <button class="act" id="gt-save">сохранить</button>
-          <button class="act" id="gt-ping">проверить</button>
-          <span id="gt-ping-out" style="color:#44445a;font-size:9px;margin-left:6px"></span>
-        </div>
+        <button class="act" id="gt-save">сохранить</button>
+        <button class="act" id="gt-ping">проверить</button>
+        <span id="gt-ping-out" style="color:#44445a;font-size:9px;margin-left:6px"></span>
       </div>
-      <div class="pn"><h3>· Сборка / релиз</h3>
+      <div class="pn"><h3>· Сборка</h3>
         <div class="r"><span class="k">message</span><input id="gt-m" value="MONOMOD update"></div>
         <div class="prog"><span id="gt-prog"></span></div>
-        <div style="margin-top:8px">
-          <button class="act" id="gt-pull">⬇ pull</button>
-          <button class="act" id="gt-push">⬆ push</button>
-          <button class="act primary" id="gt-ship">▶ ship</button>
-        </div>
+        <button class="act" id="gt-pull">⬇ pull</button>
+        <button class="act" id="gt-push">⬆ push</button>
+        <button class="act primary" id="gt-ship">▶ ship</button>
         <div id="gt-out" style="color:#44445a;font-size:9px;margin-top:8px;white-space:pre-wrap"></div>
       </div>
-      <div class="pn"><h3>· Render hook</h3>
-        <div class="r"><span class="k">hook URL</span><input id="gt-h" placeholder="https://api.render.com/deploy/..."></div>
-        <button class="act" id="gt-h-save">сохранить</button>
-        <button class="act" id="gt-deploy">deploy</button>
-      </div>
       <div class="pn"><h3>· Статус</h3>
-        <div class="r"><span class="k">lastStatus</span><span id="gt-st">idle</span></div>
-        <div class="r"><span class="k">lastAt</span><span id="gt-at">—</span></div>
+        <div class="r"><span class="k">status</span><span id="gt-st">idle</span></div>
+        <div class="r"><span class="k">at</span><span id="gt-at">—</span></div>
         <div class="r"><span class="k">ops</span><span id="gt-ops">0</span></div>
       </div>
-      <div class="pn"><h3>· Лог</h3><div id="gt-log"></div></div>
+      <div class="pn"><h3>· Лог</h3><div id="gt-log">· пусто</div></div>
       <button class="act" onclick="toggleOverlay('git')">закрыть</button>
     </div>
 
@@ -161,31 +314,11 @@
   </div>
 
   <div id="state-panel">
-    <div class="var-box">
-      <div class="var-name">v1 · плотность</div>
-      <div class="var-value" id="v1-val">0.00</div>
-      <div class="var-bar"><div class="var-bar-fill" id="v1-bar" style="background:#4dd0c7"></div></div>
-    </div>
-    <div class="var-box">
-      <div class="var-name">v2 · связность</div>
-      <div class="var-value" id="v2-val">0.00</div>
-      <div class="var-bar"><div class="var-bar-fill" id="v2-bar" style="background:#8b5cf6"></div></div>
-    </div>
-    <div class="var-box">
-      <div class="var-name">v3 · ритм</div>
-      <div class="var-value" id="v3-val">0.00</div>
-      <div class="var-bar"><div class="var-bar-fill" id="v3-bar" style="background:#e8c39e"></div></div>
-    </div>
-    <div class="var-box">
-      <div class="var-name">v4 · глубина</div>
-      <div class="var-value" id="v4-val">0.00</div>
-      <div class="var-bar"><div class="var-bar-fill" id="v4-bar" style="background:#ffb347"></div></div>
-    </div>
-    <div class="var-box">
-      <div class="var-name">v5 · новизна</div>
-      <div class="var-value" id="v5-val">0.00</div>
-      <div class="var-bar"><div class="var-bar-fill" id="v5-bar" style="background:#2ed573"></div></div>
-    </div>
+    <div class="var-box"><div class="var-name">v1 · плотность</div><div class="var-value" id="v1-val">0.00</div><div class="var-bar"><div class="var-bar-fill" id="v1-bar" style="background:#4dd0c7"></div></div></div>
+    <div class="var-box"><div class="var-name">v2 · связность</div><div class="var-value" id="v2-val">0.00</div><div class="var-bar"><div class="var-bar-fill" id="v2-bar" style="background:#8b5cf6"></div></div></div>
+    <div class="var-box"><div class="var-name">v3 · ритм</div><div class="var-value" id="v3-val">0.00</div><div class="var-bar"><div class="var-bar-fill" id="v3-bar" style="background:#e8c39e"></div></div></div>
+    <div class="var-box"><div class="var-name">v4 · глубина</div><div class="var-value" id="v4-val">0.00</div><div class="var-bar"><div class="var-bar-fill" id="v4-bar" style="background:#ffb347"></div></div></div>
+    <div class="var-box"><div class="var-name">v5 · новизна</div><div class="var-value" id="v5-val">0.00</div><div class="var-bar"><div class="var-bar-fill" id="v5-bar" style="background:#2ed573"></div></div></div>
   </div>
 
   <div id="footer">
@@ -200,6 +333,567 @@
 
 </div>
 
-<script type="module" src="main.js"></script>
+<script>
+"use strict";
+
+/* ═══ ЯДРО ═══ */
+const CORE = {
+  marker: "M#rqlmhwgt",
+  coord: [68, 194],
+  ops: ["Λ6", "Γ6", "Α6"],
+  opt: 110.347,
+  klepa: "KLP-001",
+  rev: "GIT4"
+};
+
+/* ═══ RNG ═══ */
+let rngState = 0x9e3779b9;
+function rng() {
+  rngState ^= rngState << 13; rngState >>>= 0;
+  rngState ^= rngState >> 17;
+  rngState ^= rngState << 5; rngState >>>= 0;
+  return rngState / 4294967296;
+}
+function hash(s) {
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return h >>> 0;
+}
+
+/* ═══ 13 МОСТОВ ═══ */
+const Bridges = (() => {
+  const bridges = {};
+  const KINDS = ["b0_center", "b1_modes", "b2_ops", "b3_systems",
+    "b4_modules", "b5_functions", "b6_reveal",
+    "v0_1", "v1_2", "v2_3", "v3_4", "v4_5", "v5_6"];
+  KINDS.forEach(k => bridges[k] = { ok: true, msgs: 0, errors: 0, subs: [] });
+  return {
+    emit(name, topic, payload) {
+      const b = bridges[name];
+      if (!b) return 0;
+      if (!b.ok) { b.errors++; return 0; }
+      b.msgs++;
+      for (const fn of b.subs) {
+        try { fn(topic, payload); }
+        catch (e) { b.errors++; if (b.errors > 5) b.ok = false; }
+      }
+      return b.msgs;
+    },
+    on(name, fn) { const b = bridges[name]; if (!b) return; b.subs.push(fn); },
+    status() { return bridges; }
+  };
+})();
+
+/* ═══ КОЛЬЦО 0 · ЦЕНТР ═══ */
+const Center = (() => {
+  const state = {
+    hash: CORE.marker, value: CORE.opt,
+    klepa: { id: CORE.klepa, gen: 1, energy: 1 }
+  };
+  return { get: () => ({ ...state }) };
+})();
+
+/* ═══ КОЛЬЦО 1 · МОДЫ ═══ */
+const Modes = (() => {
+  const MODES = ["МОНОЛОГ", "DIMOD", "MULTIMOD", "ДИАЛОГ", "ПОЛИЛОГ", "ХАОС"];
+  return { all: () => MODES.slice() };
+})();
+
+/* ═══ КОЛЬЦО 2 · ОПЕРАТОРЫ ═══ */
+const Ops = {
+  apply(x) {
+    let v = x;
+    v = 0.618 * v;
+    v = v + 137;
+    v = 0.871 * v;
+    if (v < 68 || v > 194) v = 68 + ((v - 68) % 126);
+    return v;
+  }
+};
+
+/* ═══ КОЛЬЦО 3 · СИСТЕМЫ ═══ */
+const Systems = (() => {
+  const GW = 64, GH = 64;
+  const grid = new Float32Array(GW * GH);
+  const next = new Float32Array(GW * GH);
+  const prev = new Float32Array(GW * GH);
+  for (let i = 0; i < grid.length; i++) grid[i] = rng() < 0.15 ? 0.5 + rng() * 0.5 : 0;
+  const V = { density: 0.3, coherence: 0.5, rhythm: 0.4, depth: 0.2, novelty: 0.1 };
+
+  function step() {
+    for (let y = 0; y < GH; y++) for (let x = 0; x < GW; x++) {
+      const i = y * GW + x;
+      let sum = 0, alive = 0;
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+        if (!dx && !dy) continue;
+        const nx = (x + dx + GW) % GW, ny = (y + dy + GH) % GH;
+        const ni = ny * GW + nx;
+        sum += grid[ni];
+        if (grid[ni] > 0.3) alive++;
+      }
+      const cur = grid[i];
+      let v;
+      if (cur > 0.3) {
+        if (alive === 2 || alive === 3) v = cur * 0.95 + 0.05 * (sum / 8);
+        else if (alive === 1 || alive === 4) v = cur * 0.7;
+        else v = cur * 0.4;
+      } else {
+        v = alive === 3 ? 0.6 + 0.4 * (sum / 8) : cur * 0.85;
+      }
+      next[i] = Math.max(0, Math.min(1, v));
+    }
+    grid.set(next);
+  }
+
+  function updateV(t) {
+    let sum = 0, alive = 0;
+    for (let i = 0; i < grid.length; i++) { sum += grid[i]; if (grid[i] > 0.3) alive++; }
+    const nd = sum / grid.length;
+    let connected = 0;
+    for (let y = 0; y < GH; y++) for (let x = 0; x < GW; x++) {
+      const i = y * GW + x;
+      if (grid[i] <= 0.3) continue;
+      let hn = false;
+      for (let dy = -1; dy <= 1 && !hn; dy++) for (let dx = -1; dx <= 1; dx++) {
+        if (!dx && !dy) continue;
+        const nx = (x + dx + GW) % GW, ny = (y + dy + GH) % GH;
+        if (grid[ny * GW + nx] > 0.3) { hn = true; break; }
+      }
+      if (hn) connected++;
+    }
+    const nc = alive > 0 ? connected / alive : 0;
+    const nr = 0.5 + 0.5 * Math.sin(t * 0.05 + nd * 3);
+    let change = 0;
+    for (let i = 0; i < grid.length; i++) change += Math.abs(grid[i] - prev[i]);
+    change /= grid.length;
+    const ndd = V.depth * 0.98 + change * 0.02;
+    const nn = Math.abs(change - V.depth * 0.02) * 5;
+    V.density = V.density * 0.9 + nd * 0.1;
+    V.coherence = V.coherence * 0.9 + nc * 0.1;
+    V.rhythm = V.rhythm * 0.85 + nr * 0.15;
+    V.depth = Math.max(0, Math.min(1, ndd));
+    V.novelty = V.novelty * 0.9 + Math.min(1, nn) * 0.1;
+    prev.set(grid);
+  }
+
+  return { step, updateV, V: () => ({ ...V }), grid: () => grid };
+})();
+
+/* ═══ КОЛЬЦО 6 · РАСКРЫТИЕ ═══ */
+const Reveal = (() => {
+  const ATOMS = "·∙⋅°oO0#*+~-=<>/\\|_abcdefghijklmnopqrstuvwxyzΛΓΑΨΩКлкп";
+  const SYLL = ["ra", "ql", "mh", "wg", "KLP", "Λ6", "Γ6", "Α6", "Ψ3", "Ω4", "68", "194", "git", "mod", "home", "mono", "dimod", "haos", "clep"];
+  const WORDS = ["узел", "связь", "форма", "начало", "пульс", "дом", "такт", "смысл", "волна", "корень", "запрос", "матрица", "высота", "генерация", "ритм", "Клепа", "кольцо", "мост", "модуль", "ядро"];
+  const PHRASES = [
+    "Клепа ведёт. Голос один.",
+    "Ядро держит границы. Слои дышат.",
+    "Мост не один. Их тринадцать.",
+    "Раскрытие растёт из центра.",
+    "Центр — M#. Второй центр — Клепа.",
+    "ХАОС — точка выхода. Не точка входа.",
+    "68 узлов. 194 связи. Один путь.",
+    "Λ держит. Γ ведёт. Α дышит."
+  ];
+  let last = { text: "", level: 0.20, depth: 0 };
+  let U = { user: 0.1, depth: 0.2, time: 0 };
+
+  function pick(a, r) { return a[Math.floor(r() * a.length)]; }
+  function computeLevel() {
+    return Math.min(0.80, 0.20 + (U.user * 0.4 + U.depth * 0.4 + U.time * 0.2) * 0.60);
+  }
+  function generate(t) {
+    const seed = hash(CORE.marker + "|" + t + "|" + Date.now());
+    let s = seed >>> 0;
+    const r = () => { s ^= s << 13; s >>>= 0; s ^= s >> 17; s ^= s << 5; s >>>= 0; return s / 4294967296; };
+    const level = computeLevel();
+    const lines = [];
+    lines.push(CORE.marker + " · " + CORE.coord.join(".") + " · " + CORE.ops.join(" · "));
+    lines.push("");
+    if (level < 0.30) {
+      let row = "";
+      for (let i = 0; i < 40; i++) row += ATOMS[Math.floor(r() * ATOMS.length)];
+      lines.push(row);
+    } else if (level < 0.40) {
+      let row = "";
+      for (let i = 0; i < 20; i++) row += pick(SYLL, r) + " ";
+      lines.push(row);
+    } else if (level < 0.55) {
+      const ws = [];
+      for (let i = 0; i < 12; i++) ws.push(pick(WORDS, r));
+      lines.push(ws.join(" · "));
+    } else if (level < 0.70) {
+      for (let i = 0; i < 4; i++) lines.push(pick(PHRASES, r));
+    } else {
+      for (let i = 0; i < 5; i++) lines.push(pick(PHRASES, r));
+      lines.push("");
+      lines.push("Раскрытие: " + level.toFixed(2));
+    }
+    lines.push("");
+    last = { text: lines.join("\n"), level, depth: 0 };
+  }
+  return {
+    update(n) { Object.assign(U, n); },
+    generate,
+    last: () => ({ ...last }),
+    level: () => computeLevel()
+  };
+})();
+
+/* ═══ КЛЕПА ═══ */
+const Klepa = (() => {
+  const state = { id: "KLP-001", gen: 1, energy: 1.0, actions: 0 };
+  function tick() {
+    state.energy = Math.max(0.6, Math.min(1, state.energy + (Math.random() - 0.5) * 0.02));
+    state.actions++;
+    if (state.actions > 100 && state.gen < 5) state.gen++;
+  }
+  return { tick, get: () => ({ ...state }) };
+})();
+
+/* ═══ ГРАФ 68 узлов ═══ */
+const G = (() => {
+  const nodes = ["core", "map", "chat", "monolog", "cognitive", "perception", "chatY", "klepa",
+    "agents", "learning", "profile", "sphere", "viz-1d", "viz-5d", "social-5d", "ring",
+    "ui", "archive", "bridge", "center", "convert",
+    "chat_voice", "chat_avatar", "social", "subs", "utility", "lots", "templates",
+    "adapt", "persona", "game", "travel", "dims", "sense", "video", "anim", "movies",
+    "blog", "world", "immersion",
+    "gen_text", "gen_avatar", "gen_video_avatar", "reputation",
+    "anticipate", "calendar", "notifications", "priority", "focus", "focus_hints",
+    "obs_in", "obs_out", "wit_in", "wit_out", "prt_in", "prt_out", "fmt_in", "fmt_out",
+    "attention", "levers", "lexicon", "gid",
+    "logi", "exchange", "buffer", "match", "flow", "dispatch",
+    "mode", "git"];
+  const edges = [
+    ["core", "map"], ["core", "chat"], ["core", "monolog"], ["core", "cognitive"],
+    ["core", "perception"], ["core", "chatY"], ["core", "klepa"], ["core", "agents"],
+    ["core", "learning"], ["map", "chat"], ["chat", "monolog"],
+    ["chat_voice", "chat_avatar"], ["chat_avatar", "social"],
+    ["social", "subs"], ["social", "persona"], ["subs", "persona"],
+    ["persona", "adapt"], ["subs", "utility"], ["social", "lots"],
+    ["utility", "lots"], ["lots", "templates"], ["templates", "adapt"],
+    ["game", "world"], ["game", "immersion"],
+    ["travel", "world"], ["travel", "immersion"], ["dims", "sense"],
+    ["sense", "immersion"], ["video", "world"], ["world", "immersion"],
+    ["core", "gen_text"], ["gen_text", "gen_avatar"],
+    ["social", "reputation"], ["reputation", "priority"],
+    ["learning", "anticipate"], ["anticipate", "calendar"],
+    ["calendar", "notifications"], ["notifications", "priority"],
+    ["priority", "focus"], ["focus", "focus_hints"],
+    ["core", "obs_in"], ["obs_in", "obs_out"],
+    ["core", "wit_in"], ["wit_in", "wit_out"],
+    ["core", "prt_in"], ["prt_in", "prt_out"],
+    ["wit_out", "fmt_in"], ["prt_out", "fmt_in"], ["fmt_in", "fmt_out"],
+    ["core", "attention"], ["attention", "levers"],
+    ["levers", "lexicon"], ["attention", "gid"],
+    ["gid", "logi"], ["exchange", "logi"],
+    ["logi", "dispatch"], ["lots", "exchange"],
+    ["utility", "exchange"], ["exchange", "buffer"],
+    ["buffer", "flow"], ["anticipate", "flow"],
+    ["flow", "dispatch"], ["dispatch", "gid"],
+    ["core", "mode"], ["mode", "git"],
+    ["core", "git"], ["git", "bridge"]
+  ];
+  const W = {}, DEG = {};
+  edges.forEach(([a, b]) => {
+    W[a + "|" + b] = 1; W[b + "|" + a] = 1;
+    DEG[a] = (DEG[a] || 0) + 1; DEG[b] = (DEG[b] || 0) + 1;
+  });
+  return {
+    nodes, edges,
+    W, dg: id => DEG[id] || 0,
+    path(a, b) {
+      if (a === b) return [a];
+      const q = [[a]], s = { [a]: 1 };
+      while (q.length) {
+        const p = q.shift(), l = p[p.length - 1];
+        for (const n of nodes) {
+          if (!W[l + "|" + n] && !W[n + "|" + l]) continue;
+          if (s[n]) continue;
+          if (n === b) return [...p, n];
+          s[n] = 1; q.push([...p, n]);
+        }
+      }
+      return null;
+    }
+  };
+})();
+
+/* ═══ 𝕄_full ═══ */
+const MFull = (() => {
+  const routes = [];
+  const fixes = [];
+  const treatments = [];
+  function addRoute(from, to) {
+    const p = G.path(from, to);
+    if (!p) return null;
+    const r = { from, to, path: p, len: p.length, t: Date.now() };
+    routes.push(r);
+    if (routes.length > 20) routes.shift();
+    return r;
+  }
+  function fix(what, why) {
+    const f = { what, why, t: Date.now() };
+    fixes.push(f);
+    if (fixes.length > 20) fixes.shift();
+    journal("◆", "fix · " + what);
+    return f;
+  }
+  function treat(phase, level) {
+    const t = { phase, level, t: Date.now() };
+    treatments.push(t);
+    if (treatments.length > 20) treatments.shift();
+    return t;
+  }
+  // автономный тик: лечим, если есть проблемы
+  setInterval(() => {
+    const bridges = Bridges.status();
+    for (const k in bridges) {
+      if (!bridges[k].ok) {
+        bridges[k].ok = true;
+        fix("bridge:" + k, "auto-repair");
+      }
+    }
+  }, 10000);
+  return {
+    routes: () => routes.slice(),
+    fixes: () => fixes.slice(),
+    treatments: () => treatments.slice(),
+    addRoute, fix, treat,
+    snap: () => ({
+      routes: routes.length,
+      fixes: fixes.length,
+      treatments: treatments.length
+    })
+  };
+})();
+
+/* ═══ ЖУРНАЛ ═══ */
+const journalEl = document.getElementById("journal");
+function journal(mark, text) {
+  const d = document.createElement("div");
+  d.className = "fr";
+  d.innerHTML = "<b>" + mark + "</b> " + text;
+  journalEl.appendChild(d);
+  while (journalEl.children.length > 10) journalEl.removeChild(journalEl.firstChild);
+}
+
+/* ═══ РЕНДЕР ═══ */
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+let W, H, cw, ch;
+
+function resize() {
+  W = canvas.width = canvas.clientWidth;
+  H = canvas.height = canvas.clientHeight;
+  cw = W / 64; ch = H / 64;
+}
+window.addEventListener("resize", resize);
+
+function render() {
+  const V = Systems.V(), grid = Systems.grid(), kl = Klepa.get();
+  ctx.fillStyle = "#050508";
+  ctx.fillRect(0, 0, W, H);
+  for (let y = 0; y < 64; y++) for (let x = 0; x < 64; x++) {
+    const v = grid[y * 64 + x];
+    if (v < 0.05) continue;
+    const hue = (V.depth * 60 + v * 30 + kl.gen * 10) % 360;
+    const sat = 40 + V.coherence * 30;
+    const light = 30 + v * 50;
+    ctx.fillStyle = `hsla(${hue},${sat}%,${light}%,${v})`;
+    ctx.fillRect(x * cw, y * ch, cw, ch);
+  }
+  ctx.fillStyle = "#e8c39e";
+  ctx.beginPath(); ctx.arc(W / 2, H / 2, 2 + kl.gen * 0.5, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#ff6b9d";
+  ctx.beginPath(); ctx.arc(W / 2, H / 2 - 15, 3, 0, Math.PI * 2); ctx.fill();
+}
+
+/* ═══ UI ═══ */
+const revealEl = document.getElementById("output");
+const beatEl = document.getElementById("beat");
+const tickEl = document.getElementById("tick-label");
+const klepaEl = document.getElementById("h-git");
+
+function updateUI(t) {
+  const V = Systems.V(), rev = Reveal.last(), kl = Klepa.get();
+  document.getElementById("v1-val").textContent = V.density.toFixed(2);
+  document.getElementById("v2-val").textContent = V.coherence.toFixed(2);
+  document.getElementById("v3-val").textContent = V.rhythm.toFixed(2);
+  document.getElementById("v4-val").textContent = V.depth.toFixed(2);
+  document.getElementById("v5-val").textContent = V.novelty.toFixed(2);
+  document.getElementById("v1-bar").style.width = (V.density * 100) + "%";
+  document.getElementById("v2-bar").style.width = (V.coherence * 100) + "%";
+  document.getElementById("v3-bar").style.width = (V.rhythm * 100) + "%";
+  document.getElementById("v4-bar").style.width = (V.depth * 100) + "%";
+  document.getElementById("v5-bar").style.width = (V.novelty * 100) + "%";
+  beatEl.textContent = "· " + [3, 6, 3, 1, 3, 3][t % 6] + " ·";
+  tickEl.textContent = "t=" + t;
+  revealEl.style.opacity = "0";
+  setTimeout(() => {
+    revealEl.textContent = rev.text;
+    revealEl.style.opacity = "1";
+  }, 300);
+}
+
+/* ═══ ОВЕРЛЕИ ═══ */
+let currentOverlay = null;
+function toggleOverlay(name) {
+  document.querySelectorAll(".overlay").forEach(o => o.classList.remove("on"));
+  if (currentOverlay === name) { currentOverlay = null; return; }
+  currentOverlay = name;
+  const el = document.getElementById("ov-" + name);
+  if (el) el.classList.add("on");
+  if (name === "home") updateHome();
+  if (name === "mode") updateMode();
+  if (name === "git") updateGit();
+  if (name === "graph") buildGraphTabs();
+  if (name === "mfull") renderMFull();
+}
+
+function updateHome() {
+  const e = id => document.getElementById(id);
+  const V = Systems.V();
+  const k = Klepa.get();
+  if (e("hm-lambda")) e("hm-lambda").textContent = (1 - V.novelty).toFixed(2);
+  if (e("hm-v1")) e("hm-v1").textContent = V.density.toFixed(2);
+  if (e("hm-v2")) e("hm-v2").textContent = V.coherence.toFixed(2);
+  if (e("hm-v3")) e("hm-v3").textContent = V.rhythm.toFixed(2);
+  if (e("hm-v4")) e("hm-v4").textContent = V.depth.toFixed(2);
+  if (e("hm-v5")) e("hm-v5").textContent = V.novelty.toFixed(2);
+  if (e("hm-nodes")) e("hm-nodes").textContent = G.nodes.length;
+  if (e("hm-edges")) e("hm-edges").textContent = G.edges.length;
+  if (e("hm-bridge")) e("hm-bridge").textContent = Object.keys(Bridges.status()).length;
+  if (e("hm-locks")) e("hm-locks").textContent = MFull.fixes().length;
+  if (e("hm-mode")) e("hm-mode").textContent = localStorage.getItem("monomod.mode") || "local";
+  if (e("hm-origin")) e("hm-origin").textContent = location.origin.slice(0, 30);
+}
+function updateMode() {
+  const e = id => document.getElementById(id);
+  const mode = localStorage.getItem("monomod.mode") || "local";
+  if (e("md-cur")) e("md-cur").textContent = mode;
+  if (e("md-origin")) e("md-origin").textContent = location.origin;
+  if (e("md-path")) e("md-path").textContent = location.pathname;
+  if (e("md-k1")) e("md-k1").textContent = localStorage.getItem("monomod.mode") || "—";
+  if (e("md-k2")) e("md-k2").textContent = localStorage.getItem("monomod.github") ? "есть" : "—";
+}
+function updateGit() {
+  const e = id => document.getElementById(id);
+  const cfg = JSON.parse(localStorage.getItem("monomod.github") || "{}");
+  if (e("gt-o")) e("gt-o").value = cfg.owner || "";
+  if (e("gt-r")) e("gt-r").value = cfg.repo || "";
+  if (e("gt-p")) e("gt-p").value = cfg.path || "index.html";
+  if (e("gt-b")) e("gt-b").value = cfg.branch || "main";
+  if (e("gt-t")) e("gt-t").value = cfg.token || "";
+  if (e("gt-m")) e("gt-m").value = cfg.commit_msg || "MONOMOD update";
+}
+
+/* ГРАФ — вкладки */
+function buildGraphTabs() {
+  const el = document.getElementById("tabs");
+  el.innerHTML = G.nodes.map(t => `<button data-t="${t}">${t}</button>`).join("");
+  el.querySelectorAll("button").forEach(b => b.onclick = () => {
+    el.querySelectorAll("button").forEach(x => x.classList.remove("on"));
+    b.classList.add("on");
+    renderGraphNode(b.dataset.t);
+  });
+  el.querySelector("button").click();
+}
+function renderGraphNode(id) {
+  const view = document.getElementById("graph-view");
+  const nb = G.edges.filter(([a, b]) => a === id || b === id)
+    .map(([a, b]) => ({ n: a === id ? b : a }));
+  view.innerHTML = `
+    <div class="pn"><h3>· ${id} · deg ${G.dg(id)}</h3>
+      <div class="r"><span class="k">связей</span><span>${nb.length}</span></div>
+    </div>
+    <div class="pn"><h3>· Связи</h3>
+      ${nb.slice(0, 20).map(x => `<div class="r"><span class="k">${x.n}</span></div>`).join("")}
+    </div>`;
+}
+
+/* 𝕄_full — рендер */
+function renderMFull() {
+  const view = document.getElementById("mfull-view");
+  const s = MFull.snap();
+  const routes = MFull.routes().slice(-5).reverse();
+  const fixes = MFull.fixes().slice(-5).reverse();
+  view.innerHTML = `
+    <div class="pn"><h3>· 𝕄_full · статус</h3>
+      <div class="r"><span class="k">маршрутов</span><span>${s.routes}</span></div>
+      <div class="r"><span class="k">исправлений</span><span>${s.fixes}</span></div>
+      <div class="r"><span class="k">лечений</span><span>${s.treatments}</span></div>
+    </div>
+    <div class="pn"><h3>· Маршрут (пример)</h3>
+      <div class="r"><span class="k">core → world</span></div>
+      <button class="act" onclick="MFull.addRoute('core','world');renderMFull()">построить</button>
+    </div>
+    <div class="pn"><h3>· Последние маршруты</h3>
+      ${routes.length ? routes.map(r =>
+        `<div class="r"><span class="k">${r.from}→${r.to}</span><span>${r.len} шагов</span></div>`
+      ).join("") : "· пусто"}
+    </div>
+    <div class="pn"><h3>· Исправления</h3>
+      ${fixes.length ? fixes.map(f =>
+        `<div class="r"><span class="k">${f.what}</span><span>${f.why}</span></div>`
+      ).join("") : "· пусто"}
+    </div>
+    <div class="pn"><h3>· Лечение · 8 фаз</h3>
+      <button class="act" onclick="MFull.treat(0,1);renderMFull()">Ф0 СТАБИЛИЗАЦИЯ</button>
+      <button class="act" onclick="MFull.treat(1,2);renderMFull()">Ф1 ДИАГНОСТИКА</button>
+      <button class="act" onclick="MFull.treat(2,1);renderMFull()">Ф2 ROLLBACK</button>
+      <button class="act" onclick="MFull.treat(7,5);renderMFull()">Ф7 ФИКСАЦИЯ</button>
+    </div>`;
+}
+
+/* ═══ КНОПКИ ═══ */
+document.getElementById("btn-journal").onclick = () => {
+  journalEl.style.display = journalEl.style.display === "none" ? "block" : "none";
+};
+document.getElementById("btn-mfull").onclick = () => toggleOverlay("mfull");
+
+let t = 0, folded = false;
+
+function loop() {
+  if (folded) { setTimeout(loop, 500); return; }
+  t++;
+  Systems.step(); Systems.step(); Systems.step();
+  Systems.updateV(t);
+  Klepa.tick(t);
+  if (t % 5 === 0) {
+    const V = Systems.V(), kl = Klepa.get();
+    Reveal.update({ user: 0.1 + kl.actions * 0.0005, depth: V.depth, time: t / 1000 });
+    Reveal.generate(t);
+  }
+  render();
+  if (t % 3 === 0) updateUI(t);
+  const V = Systems.V();
+  const delay = 80 + (1 - V.rhythm) * 180;
+  setTimeout(() => requestAnimationFrame(loop), delay);
+}
+
+/* СТАРТ */
+resize();
+journal("◆", "MONOMOD v10.3 · запущен");
+journal("◆", "8 колец · 13 мостов");
+journal("◆", "68 узлов · 194 связи");
+journal("◆", "Клепа — второй центр");
+Reveal.generate(0);
+loop();
+
+window.MONOMOD = {
+  CORE, Bridges, Center, Modes, Ops, Systems, Reveal, Klepa, G, MFull,
+  report: () => ({
+    version: "v10.3",
+    nodes: G.nodes.length,
+    edges: G.edges.length,
+    V: Systems.V(),
+    klepa: Klepa.get(),
+    mfull: MFull.snap(),
+    t
+  })
+};
+console.log("[MONOMOD v10.3]", MONOMOD.report());
+</script>
 </body>
 </html>
